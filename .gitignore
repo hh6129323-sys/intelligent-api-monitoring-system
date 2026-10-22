@@ -8,3 +8,7 @@ server.js.backup*
 public/*.backup*
 public/*.before-*
 backup/
+
+# Local recovery backups
+backups/
+*.part3-backup

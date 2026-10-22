@@ -24,6 +24,7 @@ let nextRunAt = null;
 let lastRunAt = null;
 let lastResults = [];
 let lastError = null;
+const apiStates = new Map();
 
 function readConfig() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
@@ -86,6 +87,33 @@ function scheduleNextRun() {
   }, 1 * 60 * 1000);
 }
 
+
+function trackApiState(api, success, details = {}) {
+  const previous = apiStates.get(api.url);
+  let status = success ? "HEALTHY" : "FAILED";
+
+  if (success && previous && previous.success === false) {
+    status = "RECOVERED";
+  }
+
+  const state = {
+    success,
+    status,
+    changedAt: new Date().toISOString()
+  };
+
+  apiStates.set(api.url, state);
+
+  return {
+    name: api.name,
+    url: api.url,
+    ...details,
+    success,
+    status,
+    stateChangedAt: state.changedAt
+  };
+}
+
 async function runCycle() {
   if (!running || busy) return;
 
@@ -114,20 +142,15 @@ async function runCycle() {
 
         const data = await response.json().catch(() => ({}));
 
-        lastResults.push({
-          name: api.name,
-          url: api.url,
+        const ok = response.ok && data.success !== false;
+        lastResults.push(trackApiState(api, ok, {
           httpStatus: response.status,
-          success: response.ok && data.success !== false,
           result: data
-        });
+        }));
       } catch (error) {
-        lastResults.push({
-          name: api.name,
-          url: api.url,
-          success: false,
+        lastResults.push(trackApiState(api, false, {
           error: error.message
-        });
+        }));
       }
     }
   } catch (error) {

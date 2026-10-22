@@ -131,25 +131,46 @@ async function explainAnomaly(anomaly) {
     const prompt = `
 You are an API monitoring assistant.
 Explain the detected API anomaly in simple, concise English.
-Return JSON only with two fields:
+Return valid JSON only with exactly two string fields:
 "cause": likely explanation based only on the evidence.
 "recommended_action": a practical next step.
-Do not invent facts.
+Do not invent facts. Do not use Markdown code fences.
 
 Anomaly:
 ${JSON.stringify(anomaly)}
 `;
 
     const result = await model.generateContent(prompt);
-    const explanation = result.response.text().trim();
+    let explanation = result.response.text().trim();
 
     if (!explanation) {
       throw new Error("Gemini returned an empty explanation.");
     }
 
+    explanation = explanation
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
+
+    const parsed = JSON.parse(explanation);
+
+    if (
+      typeof parsed.cause !== "string" ||
+      typeof parsed.recommended_action !== "string" ||
+      !parsed.cause.trim() ||
+      !parsed.recommended_action.trim()
+    ) {
+      throw new Error(
+        "Gemini response must contain non-empty cause and recommended_action strings."
+      );
+    }
+
     return {
       ai_configured: true,
-      ai_explanation: explanation,
+      ai_explanation: JSON.stringify({
+        cause: parsed.cause.trim(),
+        recommended_action: parsed.recommended_action.trim(),
+      }),
     };
   } catch (error) {
     console.error("Gemini error:", error.message);
@@ -161,7 +182,6 @@ ${JSON.stringify(anomaly)}
     };
   }
 }
-
 async function saveAlert(anomaly) {
   const alert = {
     ...anomaly,

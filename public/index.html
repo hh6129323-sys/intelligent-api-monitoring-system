@@ -1,4 +1,4 @@
-
+﻿
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -709,11 +709,11 @@ th, td,
           </div>
           <div class="card">
             <div class="card-label">Last Run</div>
-            <div class="card-value" id="autoLastRun">—</div>
+            <div class="card-value" id="autoLastRun">â€”</div>
           </div>
           <div class="card">
             <div class="card-label">Next Run</div>
-            <div class="card-value" id="autoNextRun">—</div>
+            <div class="card-value" id="autoNextRun">â€”</div>
           </div>
         </div>
 
@@ -1158,7 +1158,7 @@ th, td,
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7">No results.</td></tr>'}</tbody>
         </table>
-        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} · Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
+        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
     }
 
     let batchInputMode = "simple";
@@ -1188,7 +1188,7 @@ th, td,
         const name = row.querySelector('[data-field="api_name"]').value.trim() || "Unnamed API";
         const cards = Array.from($("batchApiRows").children);
         const number = cards.indexOf(row) + 1;
-        row.querySelector("[data-api-card-title]").textContent = `API ${number} — ${name}`;
+        row.querySelector("[data-api-card-title]").textContent = `API ${number} - ${name}`;
       };
 
       row.querySelector('[data-field="api_name"]').addEventListener("input", updateCardTitle);
@@ -1418,9 +1418,9 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
     }
 
     function autoFormatTime(value) {
-      if (!value) return "—";
+      if (!value) return "â€”";
       const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+      return Number.isNaN(date.getTime()) ? "â€”" : date.toLocaleString();
     }
 
     function autoMessage(message, type = "") {
@@ -1440,7 +1440,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
       if (badge) badge.textContent = data.busy ? "Running Check" : (data.running ? "Running" : "Stopped");
       if (toggle) toggle.textContent = data.running ? "Stop Monitoring" : "Start Monitoring";
       if (lastRun) lastRun.textContent = autoFormatTime(data.lastRunAt);
-      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "—";
+      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "â€”";
 
       if (results) {
         results.replaceChildren();
@@ -1456,7 +1456,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
         } else {
           data.apis.forEach(api => {
             const row = document.createElement("p");
-            row.textContent = `${api.name} — ${api.url}`;
+            row.textContent = `${api.name} â€” ${api.url}`;
             results.appendChild(row);
           });
         }
@@ -1475,7 +1475,9 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
             row.style.cssText = "padding:14px;margin:10px 0;border:1px solid #263449;border-radius:10px;";
             const result = item.result || {};
             const title = document.createElement("strong");
-            title.textContent = `${item.name}: ${item.success ? "SUCCESS" : "FAILED"}`;
+            const status = item.status || (item.success ? "HEALTHY" : "FAILED");
+            title.textContent = `${item.name}: ${status}`;
+            title.style.color = status === "FAILED" ? "#ff6b81" : status === "RECOVERED" ? "#34d399" : "#60a5fa";
             row.appendChild(title);
             const details = document.createElement("p");
             details.style.cssText = "margin:8px 0 0;line-height:1.9;";
