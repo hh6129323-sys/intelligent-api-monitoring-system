@@ -1,0 +1,1053 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Care Guide | API Monitor</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #121c2e;
+      --border: #25334a;
+      --text: #e8eef8;
+      --muted: #91a0b8;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --red: #fb7185;
+      --yellow: #fbbf24;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    aside {
+      width: 230px;
+      background: #0e1727;
+      border-right: 1px solid var(--border);
+      padding: 28px 18px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .brand span { color: var(--blue); }
+
+    .side-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 35px;
+    }
+
+    .nav-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .nav-item.active {
+      background: #1b3150;
+      color: #fff;
+    }
+
+    main {
+      flex: 1;
+      min-width: 0;
+      padding: 30px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    h1 { font-size: 27px; margin: 0 0 8px; }
+    h2 { font-size: 17px; margin: 0 0 20px; }
+    p { color: var(--muted); }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: #17263b;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--yellow);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 22px;
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-value {
+      font-size: 30px;
+      font-weight: 700;
+      margin: 12px 0 7px;
+      overflow-wrap: anywhere;
+    }
+
+    .blue { color: var(--blue); }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .yellow { color: var(--yellow); }
+
+    .panel { margin-bottom: 22px; }
+
+    .statistics-cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 900px) {
+      .statistics-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .statistics-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .monitor-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      flex: 1;
+      min-width: 220px;
+      background: #0b1424;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus { border-color: var(--blue); }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+    }
+
+    button:disabled { opacity: .6; cursor: wait; }
+
+    button.secondary {
+      background: #26364e;
+      color: var(--text);
+    }
+
+    button.resolve {
+      background: #123d35;
+      color: var(--green);
+      padding: 8px 11px;
+    }
+
+    .message {
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .message.error { color: var(--red); }
+    .message.success { color: var(--green); }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 760px;
+    }
+
+    th, td {
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    td {
+      overflow-wrap: normal;
+      word-break: normal;
+      vertical-align: middle;
+    }
+
+    th:first-child,
+    td:first-child {
+      width: 42px;
+      white-space: nowrap;
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+      min-width: 105px;
+      white-space: nowrap;
+    }
+
+    th:nth-child(3),
+    td:nth-child(3) {
+      width: 80px;
+      white-space: nowrap;
+    }
+
+    th:nth-child(4),
+    td:nth-child(4) {
+      min-width: 85px;
+      white-space: nowrap;
+    }
+
+    th:last-child,
+    td:last-child {
+      min-width: 78px;
+      white-space: nowrap;
+    }
+
+    td:nth-child(5) {
+      min-width: 230px;
+      overflow-wrap: break-word;
+    }
+
+    .severity {
+      display: inline-block;
+      border-radius: 5px;
+      padding: 5px 8px;
+      background: #2b2330;
+      color: var(--yellow);
+      font-size: 11px;
+    }
+
+    .severity.high { color: var(--red); }
+    .severity.low { color: var(--blue); }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 28px;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 6px 0 20px;
+    }
+
+    @media (max-width: 1000px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      aside { width: 185px; }
+      main { padding: 22px; }
+    }
+
+    @media (max-width: 650px) {
+      .layout { display: block; }
+      aside { width: 100%; padding: 18px; }
+      .side-subtitle { margin-bottom: 15px; }
+      .nav-item { display: inline-block; margin: 0 5px 0 0; }
+      main { padding: 16px; }
+      .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .card { padding: 15px; }
+      .card-value { font-size: 24px; }
+      .panel { padding: 16px; }
+    }
+
+    /* PROFESSIONAL_UI_V1 */
+    :root {
+      --bg: #080d19;
+      --panel: #101827;
+      --muted: #94a3b8;
+      --text: #e8eef8;
+      --blue: #60a5fa;
+      --red: #fb7185;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --border: rgba(148, 163, 184, .16);
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(37, 99, 235, .13), transparent 38%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    aside {
+      background: rgba(12, 19, 33, .96);
+      border-right: 1px solid var(--border);
+    }
+
+    .brand {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -.7px;
+    }
+
+    .brand span { color: var(--blue); }
+
+    .side-subtitle {
+      letter-spacing: 1.7px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .nav-item {
+      border-radius: 10px;
+      padding: 11px 13px;
+      margin: 5px 0;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, .15);
+      color: #93c5fd;
+      border: 1px solid rgba(96, 165, 250, .2);
+    }
+
+    .topbar {
+      margin-bottom: 26px;
+    }
+
+    .cards {
+      gap: 16px;
+    }
+
+    .card, .panel {
+      background: linear-gradient(145deg, rgba(19, 29, 47, .98), rgba(13, 21, 36, .98));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, .15);
+    }
+
+    .card {
+      padding: 22px;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(96, 165, 250, .4);
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .4px;
+    }
+
+    .card-value {
+      font-size: 30px;
+      font-weight: 750;
+      margin-top: 8px;
+    }
+
+    .panel {
+      padding: 24px;
+      margin-top: 20px;
+    }
+
+    input, select, textarea {
+      background: #0b1322;
+      color: var(--text);
+      border: 1px solid #2a3950;
+      border-radius: 9px;
+      padding: 11px 13px;
+      outline: none;
+      max-width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, .12);
+    }
+
+    button {
+      border: 1px solid rgba(96, 165, 250, .3);
+      border-radius: 9px;
+      padding: 10px 15px;
+      background: #2563eb;
+      color: white;
+      font-weight: 650;
+      cursor: pointer;
+      transition: filter .2s ease, transform .2s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.13);
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible {
+      outline: 2px solid #93c5fd;
+      outline-offset: 3px;
+    }
+
+    button.resolve {
+      background: rgba(16, 185, 129, .12);
+      color: #6ee7b7;
+      border-color: rgba(52, 211, 153, .3);
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+    }
+
+    th {
+      background: #111c2e;
+      color: #a9bad0;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 12px;
+      text-align: left;
+    }
+
+    tbody tr {
+      transition: background .15s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(96, 165, 250, .055);
+    }
+
+    .severity {
+      border: 1px solid rgba(251, 191, 36, .2);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .severity.high {
+      color: #fda4af;
+      background: rgba(244, 63, 94, .1);
+      border-color: rgba(244, 63, 94, .25);
+    }
+
+    .severity.medium {
+      color: #fcd34d;
+      background: rgba(245, 158, 11, .1);
+    }
+
+    .severity.low {
+      color: #93c5fd;
+      background: rgba(59, 130, 246, .1);
+      border-color: rgba(59, 130, 246, .25);
+    }
+
+    .empty {
+      padding: 32px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 650px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+      .card { padding: 15px; }
+      .card-value { font-size: 24px; }
+      .panel { padding: 14px; overflow-x: auto; }
+      input, select { width: 100%; box-sizing: border-box; }
+      .topbar { gap: 12px; flex-wrap: wrap; }
+      th, td { padding: 10px 8px; }
+    }
+.nav-item,
+.nav-item *,
+h1, h2, h3, p,
+.card, .card *,
+.panel, .panel *,
+th, td,
+.badge {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+
+    /* Alert details and monitoring history - preserves existing dark theme */
+    .action-buttons { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+    button.details-button { background:#26364e; border-color:rgba(148,163,184,.25); color:var(--text); padding:8px 11px; }
+    .details-modal { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,23,.78); }
+    .details-modal.open { display:flex; }
+    .details-dialog { width:min(620px,100%); max-height:85vh; overflow:auto; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.45); }
+    .details-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    .details-heading h2 { margin:0; }
+    .details-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .detail-item { background:rgba(2,6,23,.28); border:1px solid var(--border); border-radius:10px; padding:12px; min-width:0; }
+    .detail-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:5px; }
+    .detail-value { overflow-wrap:anywhere; }
+    .history-list { display:grid; gap:9px; }
+    .history-item { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px; border:1px solid var(--border); border-radius:10px; background:rgba(2,6,23,.18); }
+    .history-item strong { display:block; overflow-wrap:anywhere; }
+    .history-chart { width:100%; height:150px; display:block; margin:12px 0; }
+    .history-empty { color:var(--muted); text-align:center; padding:18px; }
+    @media(max-width:650px) { .details-dialog { padding:17px; } .details-grid { grid-template-columns:1fr; } .history-item { align-items:flex-start; flex-direction:column; } }
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">Care Guide <span>AI</span></div>
+      <div class="side-subtitle">INTELLIGENT API MONITOR</div>
+      <div class="nav-item active" data-target="dashboard">Dashboard</div>
+<div class="nav-item" data-target="api-monitoring">API Monitoring</div>
+<div class="nav-item" data-target="alerts">Alerts</div>
+      <p class="muted">Monitor APIs, detect anomalies and manage alerts.</p>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h1>Monitoring Dashboard</h1>
+          <div class="muted">Real-time API health and anomaly overview</div>
+        </div>
+        <div class="badge"><span class="dot" id="statusDot"></span><span id="connectionStatus">Checking server...</span></div>
+      </div>
+
+      <section class="cards">
+        <div class="card">
+          <div class="card-label">Server Status</div>
+          <div class="card-value yellow" id="serverStatus">Checking</div>
+          <div class="muted">Backend health</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total Alerts Loaded</div>
+          <div class="card-value blue" id="totalAlerts">-</div>
+          <div class="muted">From the alerts endpoint</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Active Alerts</div>
+          <div class="card-value red" id="activeAlerts">-</div>
+          <div class="muted">Needs attention</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Resolved Alerts</div>
+          <div class="card-value green" id="resolvedAlerts">-</div>
+          <div class="muted">Already resolved</div>
+        </div>
+      </section>
+
+            <section class="cards statistics-cards">
+        <div class="card">
+          <div class="card-label">Success Rate</div>
+          <div class="card-value green" id="successRate">N/A</div>
+          <div class="muted">Successful recorded checks</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Average Response Time</div>
+          <div class="card-value blue" id="averageResponseTime">N/A</div>
+          <div class="muted">Recorded checks in milliseconds</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total Monitoring Checks</div>
+          <div class="card-value" id="totalMonitoringChecks">0</div>
+          <div class="muted">Loaded from Supabase</div>
+        </div>
+      </section>
+        <section class="panel">
+<h2>Monitor an API</h2>
+        <p class="muted">Enter a public API URL that you are authorized to monitor.</p>
+        <form class="monitor-form" id="monitorForm">
+          <input id="apiUrl" type="url" placeholder="https://example.com/api" required />
+          <button type="submit" id="monitorButton">Run Monitor</button>
+          <button type="button" class="secondary" id="demoButton">Run Demo Test</button>
+        </form>
+        <div class="message" id="monitorMessage" role="status"></div>
+      </section>
+
+      <section class="panel">
+        <div class="topbar">
+          <div>
+            <h2 style="margin-bottom:6px">Recent Alerts</h2>
+            <div class="muted">Review anomaly details and resolve alerts.</div>
+          </div>
+          <button type="button" class="secondary" id="refreshButton">Refresh</button>
+        </div>
+        <div class="alert-filters">
+          <input id="alertSearch" type="search" placeholder="Search alerts..." aria-label="Search alerts" />
+          <select id="severityFilter" aria-label="Filter by severity">
+            <option value="all">All severities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select id="statusFilter" aria-label="Filter by status">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="resolved">Resolved</option>
+          </select>
+          <span id="filterCount" class="muted">Alerts</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Message</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="alertsTable">
+              <tr><td colspan="6" class="empty">Loading alerts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="message" id="alertsMessage" role="status"></div>
+      </section>
+
+      <section class="panel" id="historyPanel">
+        <div class="topbar">
+          <div>
+            <h2 style="margin-bottom:6px">Monitoring History</h2>
+            <div class="muted">Recent checks from Supabase. Records remain saved after refresh.</div>
+          </div>
+          <button type="button" class="secondary" id="clearHistoryButton">Clear Local History</button>
+        </div>
+        <div class="muted">Response time (milliseconds)</div>
+        <svg id="responseChart" class="history-chart" viewBox="0 0 600 150" role="img" aria-label="Response time chart">
+          <text x="300" y="78" text-anchor="middle" fill="#94a3b8" font-size="13">Run a monitor to see response times</text>
+        </svg>
+        <div id="historyList" class="history-list"><div class="history-empty">No monitoring history yet. Run Monitor or Demo Test to add an entry.</div></div>
+      </section>
+
+      <footer>Care Guide AI Monitor | Intelligent API Monitoring &amp; Alert System</footer>
+    </main>
+  </div>
+
+
+  <div class="details-modal" id="alertDetailsModal" role="dialog" aria-modal="true" aria-labelledby="alertDetailsTitle">
+    <div class="details-dialog">
+      <div class="details-heading">
+        <h2 id="alertDetailsTitle">Alert Details</h2>
+        <button type="button" class="secondary" id="closeDetailsButton" aria-label="Close alert details">Close</button>
+      </div>
+      <div id="alertDetailsContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    async function apiRequest(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
+      return data;
+    }
+
+    function setConnection(online, text) {
+      $("connectionStatus").textContent = text;
+      $("serverStatus").textContent = online ? "Online" : "Offline";
+      $("serverStatus").className = "card-value " + (online ? "green" : "red");
+      $("statusDot").style.background = online ? "var(--green)" : "var(--red)";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    async function checkHealth() {
+      try {
+        await apiRequest("/health");
+        setConnection(true, "Backend connected");
+      } catch (error) {
+        setConnection(false, "Backend unavailable");
+      }
+    }
+
+    let cachedAlerts = [];
+
+    function renderFilteredAlerts() {
+      const table = $("alertsTable");
+      const query = ($("alertSearch")?.value || "").trim().toLowerCase();
+      const severity = $("severityFilter")?.value || "all";
+      const status = $("statusFilter")?.value || "all";
+
+      const filtered = cachedAlerts.filter((alert) => {
+        const alertStatus = String(alert.status || "active").toLowerCase();
+        const alertSeverity = String(alert.severity || "unknown").toLowerCase();
+        const searchable = [
+          alert.id, alert.type, alert.severity, alert.status, alert.message
+        ].map((value) => String(value ?? "")).join(" ").toLowerCase();
+
+        return (!query || searchable.includes(query)) &&
+          (severity === "all" || alertSeverity === severity) &&
+          (status === "all" || alertStatus === status);
+      });
+
+      $("filterCount").textContent =
+        `Showing ${filtered.length} of ${cachedAlerts.length} alerts`;
+
+      if (!filtered.length) {
+        table.innerHTML = '<tr><td colspan="6" class="empty">No matching alerts.</td></tr>';
+        return;
+      }
+
+      table.innerHTML = filtered.map((alert) => {
+        const id = alert.id;
+        const alertStatus = String(alert.status || "active");
+        const isResolved = alertStatus.toLowerCase() === "resolved";
+        const alertSeverity = String(alert.severity || "unknown").toLowerCase();
+
+        return `
+          <tr>
+            <td>${escapeHtml(id ?? "-")}</td>
+            <td>${escapeHtml(alert.type || "unknown")}</td>
+            <td><span class="severity ${escapeHtml(alertSeverity)}">${escapeHtml(alertSeverity)}</span></td>
+            <td>${escapeHtml(alertStatus)}</td>
+            <td>${escapeHtml(alert.message || "-")}</td>
+            <td>
+              <div class="action-buttons">
+                <button type="button" class="details-button" data-details="${escapeHtml(id ?? "")}">View Details</button>
+                ${!isResolved && id != null
+                  ? `<button class="resolve" data-resolve="${escapeHtml(id)}">Resolve</button>`
+                  : ""}
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    $("alertSearch")?.addEventListener("input", renderFilteredAlerts);
+    $("severityFilter")?.addEventListener("change", renderFilteredAlerts);
+    $("statusFilter")?.addEventListener("change", renderFilteredAlerts);
+
+    async function loadAlerts() {
+      const table = $("alertsTable");
+      $("alertsMessage").textContent = "";
+
+      try {
+        const data = await apiRequest("/alerts/all");
+        const alerts = Array.isArray(data) ? data :
+          Array.isArray(data.alerts) ? data.alerts :
+          Array.isArray(data.data) ? data.data : [];
+
+        const active = alerts.filter((item) =>
+          String(item.status || "active").toLowerCase() !== "resolved"
+        );
+        const resolved = alerts.length - active.length;
+
+        $("totalAlerts").textContent = alerts.length;
+        $("activeAlerts").textContent = active.length;
+        $("resolvedAlerts").textContent = resolved;
+
+        cachedAlerts = alerts;
+        renderFilteredAlerts();
+      } catch (error) {
+        table.innerHTML = '<tr><td colspan="6" class="empty">Could not load alerts.</td></tr>';
+        $("alertsMessage").textContent =
+          error.message + " - Check the backend and the GET /alerts response format.";
+        $("alertsMessage").className = "message error";
+      }
+    }
+
+    let monitoringHistory = [];
+    let historyLoading = false;
+
+    async function loadMonitoringHistory() {
+      if (historyLoading) return;
+      historyLoading = true;
+
+      const list = $("historyList");
+      list.innerHTML = '<div class="history-empty">Loading saved monitoring history...</div>';
+
+      try {
+        const data = await apiRequest("/monitoring-history");
+        monitoringHistory = Array.isArray(data.history) ? data.history.map((item) => ({
+          target: item.url || "Unknown",
+          time: item.created_at ? new Date(item.created_at).toLocaleString() : "",
+          responseTime: item.response_time_ms ?? null,
+          statusCode: item.status_code ?? "N/A"
+        })) : [];
+
+        renderHistory();
+      } catch (error) {
+        list.innerHTML = `<div class="history-empty">Could not load saved history: ${escapeHtml(error.message)}</div>`;
+      } finally {
+        historyLoading = false;
+      }
+    }
+
+    function renderHistory() {
+      const history = monitoringHistory;
+      const list = $("historyList");
+      const chart = $("responseChart");
+
+      const successfulChecks = history.filter((item) => {
+        const status = Number(item.statusCode);
+        return status >= 200 && status < 300;
+      }).length;
+
+      const validTimes = history
+        .map((item) => Number(item.responseTime))
+        .filter((value) => Number.isFinite(value) && value >= 0);
+
+      $("successRate").textContent = history.length
+        ? `${Math.round((successfulChecks / history.length) * 100)}%`
+        : "N/A";
+
+      $("averageResponseTime").textContent = validTimes.length
+        ? `${Math.round(validTimes.reduce((sum, value) => sum + value, 0) / validTimes.length)} ms`
+        : "N/A";
+
+      $("totalMonitoringChecks").textContent = String(history.length);
+
+      if (!history.length) {
+        list.innerHTML = '<div class="history-empty">No monitoring history saved yet. Run Monitor or Demo Test to add an entry.</div>';
+        chart.innerHTML = '<text x="300" y="78" text-anchor="middle" fill="#94a3b8" font-size="13">Run a monitor to see response times</text>';
+        return;
+      }
+
+      list.innerHTML = history.map((item) => `
+        <div class="history-item">
+          <div><strong>${escapeHtml(item.target || "Unknown")}</strong><span class="muted">${escapeHtml(item.time || "")}</span></div>
+          <div><strong>${escapeHtml(item.responseTime ?? "N/A")} ms</strong><span class="muted">Status: ${escapeHtml(item.statusCode ?? "N/A")}</span></div>
+        </div>`).join("");
+
+      const values = history.slice(0, 8)
+        .map((item) => Number(item.responseTime))
+        .filter((n) => Number.isFinite(n) && n >= 0)
+        .reverse();
+
+      if (!values.length) {
+        chart.innerHTML = '<text x="300" y="78" text-anchor="middle" fill="#94a3b8" font-size="13">Response-time data is not available yet</text>';
+        return;
+      }
+
+      const max = Math.max(...values, 1);
+      const points = values.map((v, i) =>
+        `${35 + i * (530 / Math.max(values.length - 1, 1))},${125 - (v / max) * 95}`
+      ).join(" ");
+
+      const dots = values.map((v, i) =>
+        `<circle cx="${35 + i * (530 / Math.max(values.length - 1, 1))}" cy="${125 - (v / max) * 95}" r="4" fill="#60a5fa"><title>${v} ms</title></circle>`
+      ).join("");
+
+      chart.innerHTML = `<line x1="30" y1="125" x2="575" y2="125" stroke="#334155"/><line x1="30" y1="30" x2="30" y2="125" stroke="#334155"/><polyline points="${points}" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>${dots}<text x="34" y="18" fill="#94a3b8" font-size="11">Max ${max} ms</text>`;
+    }
+    function showAlertDetails(id) {
+      const alert = cachedAlerts.find((item) => String(item.id ?? "") === String(id));
+      if (!alert) return;
+
+      let details = alert.details ?? {};
+      if (typeof details === "string") {
+        try {
+          details = JSON.parse(details);
+        } catch {
+          details = {};
+        }
+      }
+
+      const url = alert.url || alert.api_url || alert.target_url ||
+        details.url || details.api_url || details.target_url || "Not provided";
+      const responseTime = alert.response_time_ms ?? details.response_time_ms ?? details.responseTime ?? null;
+
+      const entries = [
+        ["Alert ID", alert.id], ["Type", alert.type], ["Severity", alert.severity],
+        ["Status", alert.status || "active"], ["Message", alert.message],
+        ["Created at", alert.created_at || alert.createdAt || alert.timestamp || "Not provided"],
+        ["API / URL", url],
+        ["Response time", responseTime != null ? `${responseTime} ms` : "Not provided"]
+      ];
+      $("alertDetailsContent").innerHTML = `<div class="details-grid">${entries.map(([label, value]) => `<div class="detail-item"><div class="detail-label">${escapeHtml(label)}</div><div class="detail-value">${escapeHtml(value ?? "Not provided")}</div></div>`).join("")}</div><p class="muted">Alert information supplied by the backend.</p>`;
+      $("alertDetailsModal").classList.add("open");
+    }
+    function closeAlertDetails() { $("alertDetailsModal").classList.remove("open"); }
+    $("closeDetailsButton").addEventListener("click", closeAlertDetails);
+    $("alertDetailsModal").addEventListener("click", (event) => { if (event.target === $("alertDetailsModal")) closeAlertDetails(); });
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeAlertDetails(); });
+    $("clearHistoryButton").addEventListener("click", () => {
+      $("historyList").innerHTML = '<div class="history-empty">Saved history is stored in Supabase and is not deleted by this button.</div>';
+    });
+
+    async function runMonitor(url, testMode = false) {
+      const button = $("monitorButton");
+      const message = $("monitorMessage");
+
+      button.disabled = true;
+      message.className = "message";
+      message.textContent = "Monitoring request running...";
+
+      try {
+        const data = await apiRequest("/monitor", {
+          method: "POST",
+          body: JSON.stringify(testMode ? { test_mode: true } : { url })
+        });
+
+        await loadMonitoringHistory();
+        message.className = "message success";
+        message.textContent =
+          `Completed. Status: ${data.status_code ?? "N/A"} | ` +
+          `Response time: ${data.response_time_ms ?? "N/A"} ms | ` +
+          `Anomalies: ${data.anomalies_detected ?? 0} | ` +
+          `Alerts saved: ${data.alerts_saved ?? 0}.`;
+
+        await loadAlerts();
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    $("monitorForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      runMonitor($("apiUrl").value.trim(), false);
+    });
+
+    $("demoButton").addEventListener("click", () => runMonitor("", true));
+    $("refreshButton").addEventListener("click", async () => {
+      await checkHealth();
+      await loadAlerts();
+    });
+
+    $("alertsTable").addEventListener("click", async (event) => {
+      const detailsButton = event.target.closest("[data-details]");
+      if (detailsButton) {
+        showAlertDetails(detailsButton.dataset.details);
+        return;
+      }
+      const button = event.target.closest("[data-resolve]");
+      if (!button) return;
+
+      button.disabled = true;
+      try {
+        await apiRequest(`/alerts/${encodeURIComponent(button.dataset.resolve)}/resolve`, {
+          method: "PATCH"
+        });
+        $("alertsMessage").className = "message success";
+        $("alertsMessage").textContent = "Alert resolved successfully.";
+        await loadAlerts();
+      } catch (error) {
+        button.disabled = false;
+        $("alertsMessage").className = "message error";
+        $("alertsMessage").textContent = "Could not resolve alert: " + error.message;
+      }
+    });
+
+    async function initialize() {
+      await checkHealth();
+      await loadAlerts();
+      await loadMonitoringHistory();
+    }
+
+    renderHistory();
+    initialize();
+    setInterval(checkHealth, 30000);
+document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
+  item.addEventListener("click", () => {
+    const target = item.dataset.target;
+
+    document.querySelectorAll(".nav-item").forEach((nav) => {
+      nav.classList.toggle("active", nav === item);
+    });
+
+    if (target === "dashboard") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (target === "api-monitoring") {
+      document.querySelector("#monitorForm").scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (target === "alerts") {
+      document.querySelector("#alertsTable").closest("section").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+});
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
