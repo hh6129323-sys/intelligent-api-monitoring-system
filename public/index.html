@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -546,6 +546,80 @@ th, td,
     .history-empty { color:var(--muted); text-align:center; padding:18px; }
     @media(max-width:650px) { .details-dialog { padding:17px; } .details-grid { grid-template-columns:1fr; } .history-item { align-items:flex-start; flex-direction:column; } }
 
+  
+    /* Batch form layout fix */
+    #batchApiRows > .panel {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+    }
+
+    #batchApiRows > .panel > div {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px !important;
+    }
+
+    #batchApiRows label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    #batchApiRows input {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 650px) {
+      #batchApiRows > .panel > div {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  
+    /* Batch panel width fix */
+    #batchTestingPanel {
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+    }
+
+    #batchTestingPanel #simpleBatchArea,
+    #batchTestingPanel #advancedBatchArea {
+      width: 100%;
+      min-width: 0;
+    }
+
+    #batchApiRows {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    #batchApiRows > .panel {
+      margin-top: 0 !important;
+      min-width: 0;
+    }
+
+    #batchApiRows > .panel > div {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #batchApiRows input {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 850px) {
+      #batchApiRows {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -619,10 +693,99 @@ th, td,
         <div class="message" id="monitorMessage" role="status"></div>
       </section>
 
+      <section class="panel" id="automaticMonitoringPanel">
+        <div class="topbar">
+          <div>
+            <h2>Automatic Monitoring</h2>
+            <p class="muted">Monitor configured public APIs automatically every 1 minute.</p>
+          </div>
+          <span class="badge" id="autoModeBadge">Stopped</span>
+        </div>
+
+        <div class="cards" style="margin:16px 0">
+          <div class="card">
+            <div class="card-label">Interval</div>
+            <div class="card-value">1 minute</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Last Run</div>
+            <div class="card-value" id="autoLastRun">—</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Next Run</div>
+            <div class="card-value" id="autoNextRun">—</div>
+          </div>
+        </div>
+
+        <label for="autoApiName">API Name</label>
+        <input id="autoApiName" type="text" placeholder="My Public API" />
+
+        <label for="autoApiUrl" style="margin-top:10px">Public API URL</label>
+        <input id="autoApiUrl" type="url" placeholder="https://example.com/api" />
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button type="button" class="secondary" id="autoAddApiButton">Save API List</button>
+          <button type="button" id="autoStartStopButton">Start Monitoring</button>
+          <button type="button" class="secondary" id="autoRefreshButton">Refresh Status</button>
+        </div>
+
+        <div class="message" id="autoMonitorMessage" role="status"></div>
+        <div id="autoMonitorResults" class="history-list"></div>
+      </section>
       <section class="panel">
         <div class="topbar">
           <div>
-            <h2 style="margin-bottom:6px">Recent Alerts</h2>
+            <section class="panel" id="batchTestingPanel" style="margin-bottom:24px">
+  <div class="topbar">
+    <div>
+      <h2 style="margin-bottom:6px">Batch Scenario Testing</h2>
+      <p class="muted">Test multiple API results using the existing POST /monitor endpoint.</p>
+    </div>
+    <span class="badge">Batch mode</span>
+  </div>
+
+  <p class="muted">Use the simple form or switch to Advanced JSON. These are test metrics, not live API measurements.</p>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0">
+    <button type="button" id="simpleBatchMode">Simple Form</button>
+    <button type="button" id="advancedBatchMode" class="secondary">Advanced JSON Mode</button>
+  </div>
+
+  <div id="simpleBatchArea">
+    <div id="batchApiRows"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button type="button" id="addBatchApiButton" class="secondary">+ Add API</button>
+    </div>
+  </div>
+
+  <div id="advancedBatchArea" style="display:none">
+    <label for="batchInput"><strong>Batch JSON input</strong></label>
+    <textarea id="batchInput" rows="12" spellcheck="false"
+      style="display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:14px;border-radius:10px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;resize:vertical;">[
+  {
+    "api_name": "Users API",
+    "response_time_ms": 450,
+    "status_code": 200,
+    "records_returned": 25
+  },
+  {
+    "api_name": "Orders API",
+    "response_time_ms": 5200,
+    "status_code": 500,
+    "records_returned": 0
+  }
+]</textarea>
+    <p class="muted">Expected fields: api_name, response_time_ms, status_code, records_returned.</p>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+    <button type="button" id="runBatchButton">Run Batch Test</button>
+    <button type="button" id="resetBatchButton" class="secondary">Reset Example</button>
+  </div>
+  <div id="batchMessage" class="message" role="status" aria-live="polite" style="margin-top:12px"></div>
+  <div id="batchResults" style="margin-top:16px;overflow-x:auto"></div>
+</section>
+<h2 style="margin-bottom:6px">Recent Alerts</h2>
             <div class="muted">Review anomaly details and resolve alerts.</div>
           </div>
           <button type="button" class="secondary" id="refreshButton">Refresh</button>
@@ -949,6 +1112,198 @@ th, td,
       $("historyList").innerHTML = '<div class="history-empty">Saved history is stored in Supabase and is not deleted by this button.</div>';
     });
 
+    const batchExample = [
+      { api_name: "Users API", response_time_ms: 450, status_code: 200, records_returned: 25 },
+      { api_name: "Orders API", response_time_ms: 5200, status_code: 500, records_returned: 0 }
+    ];
+
+    function resetBatchExample() {
+      $("batchInput").value = JSON.stringify(batchExample, null, 2);
+      $("batchMessage").textContent = "";
+      $("batchResults").innerHTML = "";
+    }
+
+    function renderBatchResults(data) {
+      if (!Array.isArray(data.results)) {
+        $("batchResults").textContent = "The server returned no batch results.";
+        return;
+      }
+
+      const rows = data.results.map(item => {
+        const issues = Array.isArray(item.alerts)
+          ? item.alerts.map(alert => alert.type || "anomaly").join(", ")
+          : "None";
+
+        return `<tr>
+          <td>${escapeHtml(String(item.api_name ?? "-"))}</td>
+          <td>${escapeHtml(String(item.status_code ?? "-"))}</td>
+          <td>${escapeHtml(String(item.response_time_ms ?? "-"))} ms</td>
+          <td>${escapeHtml(String(item.records_returned ?? "-"))}</td>
+          <td>${escapeHtml(String(item.anomalies_detected ?? 0))}</td>
+          <td>${escapeHtml(String(item.alerts_saved ?? 0))}</td>
+          <td>${escapeHtml(issues)}</td>
+        </tr>`;
+      }).join("");
+
+      $("batchResults").innerHTML = `
+        <div class="cards" style="margin-bottom:14px">
+          <div class="card"><div class="card-label">APIs Tested</div><div class="card-value">${escapeHtml(String(data.total_apis ?? 0))}</div></div>
+          <div class="card"><div class="card-label">Anomalies Detected</div><div class="card-value">${escapeHtml(String(data.total_anomalies ?? 0))}</div></div>
+          <div class="card"><div class="card-label">Alerts Saved</div><div class="card-value">${escapeHtml(String(data.total_alerts_saved ?? 0))}</div></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th>API</th><th>Status</th><th>Response</th><th>Records</th>
+            <th>Anomalies</th><th>Saved</th><th>Detected Issues</th>
+          </tr></thead>
+          <tbody>${rows || '<tr><td colspan="7">No results.</td></tr>'}</tbody>
+        </table>
+        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} · Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
+    }
+
+    let batchInputMode = "simple";
+
+    function addBatchApiRow(values = {}) {
+      const row = document.createElement("div");
+      row.className = "panel";
+      row.style.cssText = "padding:14px;margin-top:12px";
+      row.innerHTML = `
+        <h3 data-api-card-title style="margin:0 0 14px;font-size:15px">API</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+          <label>API Name
+            <input data-field="api_name" placeholder="Users API" value="${escapeHtml(String(values.api_name ?? ""))}" />
+          </label>
+          <label>Response Time (ms)
+            <input data-field="response_time_ms" type="number" min="0" placeholder="450" value="${escapeHtml(String(values.response_time_ms ?? ""))}" />
+          </label>
+          <label>Status Code
+            <input data-field="status_code" type="number" min="100" max="599" placeholder="200" value="${escapeHtml(String(values.status_code ?? ""))}" />
+          </label>
+          <label>Records Returned
+            <input data-field="records_returned" type="number" min="0" placeholder="25" value="${escapeHtml(String(values.records_returned ?? ""))}" />
+          </label>
+        </div>
+        <button type="button" class="secondary" data-remove-api style="margin-top:10px">Remove API</button>`;
+      const updateCardTitle = () => {
+        const name = row.querySelector('[data-field="api_name"]').value.trim() || "Unnamed API";
+        const cards = Array.from($("batchApiRows").children);
+        const number = cards.indexOf(row) + 1;
+        row.querySelector("[data-api-card-title]").textContent = `API ${number} — ${name}`;
+      };
+
+      row.querySelector('[data-field="api_name"]').addEventListener("input", updateCardTitle);
+      row.updateBatchCardTitle = updateCardTitle;
+
+      row.querySelector("[data-remove-api]").addEventListener("click", () => {
+        row.remove();
+        if (!$("batchApiRows").children.length) addBatchApiRow();
+        Array.from($("batchApiRows").children).forEach(card => card.updateBatchCardTitle?.());
+      });
+
+      $("batchApiRows").appendChild(row);
+      Array.from($("batchApiRows").children).forEach(card => card.updateBatchCardTitle?.());
+    }
+
+    function readSimpleBatchRows() {
+      const rows = Array.from($("batchApiRows").children);
+      if (!rows.length) throw new Error("Add at least one API.");
+
+      return rows.map((row, index) => {
+        const value = field => row.querySelector(`[data-field="${field}"]`).value.trim();
+        const api_name = value("api_name");
+        const response_time_ms = value("response_time_ms");
+        const status_code = value("status_code");
+        const records_returned = value("records_returned");
+
+        if (!api_name || response_time_ms === "" || status_code === "" || records_returned === "") {
+          throw new Error(`Please complete all fields for API row ${index + 1}.`);
+        }
+
+        const item = {
+          api_name,
+          response_time_ms: Number(response_time_ms),
+          status_code: Number(status_code),
+          records_returned: Number(records_returned)
+        };
+        if (item.response_time_ms < 0 || item.records_returned < 0 ||
+            !Number.isInteger(item.status_code) || item.status_code < 100 || item.status_code > 599) {
+          throw new Error(`Check the numeric values in API row ${index + 1}.`);
+        }
+        return item;
+      });
+    }
+
+    function switchBatchMode(mode) {
+      batchInputMode = mode;
+      $("simpleBatchArea").style.display = mode === "simple" ? "" : "none";
+      $("advancedBatchArea").style.display = mode === "advanced" ? "" : "none";
+      $("simpleBatchMode").classList.toggle("secondary", mode !== "simple");
+      $("advancedBatchMode").classList.toggle("secondary", mode !== "advanced");
+      $("batchMessage").textContent = "";
+    }
+
+    $("simpleBatchMode").addEventListener("click", () => switchBatchMode("simple"));
+    $("advancedBatchMode").addEventListener("click", () => switchBatchMode("advanced"));
+    $("addBatchApiButton").addEventListener("click", () => addBatchApiRow());
+    addBatchApiRow({ api_name: "Users API", response_time_ms: 450, status_code: 200, records_returned: 25 });
+    addBatchApiRow({ api_name: "Orders API", response_time_ms: 5200, status_code: 500, records_returned: 0 });
+    async function runBatchTest() {
+      const button = $("runBatchButton");
+      const message = $("batchMessage");
+      button.disabled = true;
+      message.textContent = "Running batch test...";
+      $("batchResults").innerHTML = "";
+
+      try {
+        let items;
+        if (batchInputMode === "simple") {
+          items = readSimpleBatchRows();
+        } else {
+          items = JSON.parse($("batchInput").value);
+        }
+
+        if (!Array.isArray(items)) {
+          throw new Error("Input must be a JSON array.");
+        }
+
+        const response = await fetch("/monitor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(items)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.error || `Request failed with HTTP ${response.status}`);
+        }
+
+        renderBatchResults(data);
+        message.textContent = `Completed: ${data.total_apis ?? 0} APIs, ${data.total_anomalies ?? 0} anomalies, ${data.total_alerts_saved ?? 0} alerts saved.`;
+
+        await loadAlerts();
+        await loadMonitoringHistory();
+      } catch (error) {
+        message.textContent = error instanceof SyntaxError
+          ? "Invalid JSON. Check commas, quotes and brackets."
+          : error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    $("runBatchButton").addEventListener("click", runBatchTest);
+    $("resetBatchButton").addEventListener("click", () => {
+      $("batchApiRows").innerHTML = "";
+      addBatchApiRow({ api_name: "Users API", response_time_ms: 450, status_code: 200, records_returned: 25 });
+      addBatchApiRow({ api_name: "Orders API", response_time_ms: 5200, status_code: 500, records_returned: 0 });
+      $("batchInput").value = `[
+  {"api_name":"Users API","response_time_ms":450,"status_code":200,"records_returned":25},
+  {"api_name":"Orders API","response_time_ms":5200,"status_code":500,"records_returned":0}
+]`;
+      $("batchResults").innerHTML = "";
+      $("batchMessage").textContent = "";
+    });
     async function runMonitor(url, testMode = false) {
       const button = $("monitorButton");
       const message = $("monitorMessage");
@@ -1041,6 +1396,182 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
     }
   });
 });
+    // AUTO_MONITOR_UI_BINDINGS_V1
+    const AUTO_CONTROLLER = "http://127.0.0.1:3001";
+
+    async function autoControllerRequest(endpoint, options = {}) {
+      const response = await fetch(AUTO_CONTROLLER + endpoint, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        }
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.error || `Controller request failed (${response.status})`);
+      }
+
+      return data;
+    }
+
+    function autoFormatTime(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+    }
+
+    function autoMessage(message, type = "") {
+      const element = document.getElementById("autoMonitorMessage");
+      if (!element) return;
+      element.className = "message" + (type ? " " + type : "");
+      element.textContent = message;
+    }
+
+    function autoRenderStatus(data) {
+      const badge = document.getElementById("autoModeBadge");
+      const toggle = document.getElementById("autoStartStopButton");
+      const lastRun = document.getElementById("autoLastRun");
+      const nextRun = document.getElementById("autoNextRun");
+      const results = document.getElementById("autoMonitorResults");
+
+      if (badge) badge.textContent = data.busy ? "Running Check" : (data.running ? "Running" : "Stopped");
+      if (toggle) toggle.textContent = data.running ? "Stop Monitoring" : "Start Monitoring";
+      if (lastRun) lastRun.textContent = autoFormatTime(data.lastRunAt);
+      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "—";
+
+      if (results) {
+        results.replaceChildren();
+
+        const apiHeading = document.createElement("h3");
+        apiHeading.textContent = "Configured APIs";
+        results.appendChild(apiHeading);
+
+        if (!data.apis || data.apis.length === 0) {
+          const empty = document.createElement("p");
+          empty.textContent = "No APIs configured yet.";
+          results.appendChild(empty);
+        } else {
+          data.apis.forEach(api => {
+            const row = document.createElement("p");
+            row.textContent = `${api.name} — ${api.url}`;
+            results.appendChild(row);
+          });
+        }
+
+        const resultHeading = document.createElement("h3");
+        resultHeading.textContent = "Latest Monitoring Results";
+        results.appendChild(resultHeading);
+
+        if (!data.lastResults || data.lastResults.length === 0) {
+          const empty = document.createElement("p");
+          empty.textContent = data.busy ? "Monitoring in progress..." : "No results yet.";
+          results.appendChild(empty);
+        } else {
+          data.lastResults.forEach(item => {
+            const row = document.createElement("div");
+            row.style.cssText = "padding:14px;margin:10px 0;border:1px solid #263449;border-radius:10px;";
+            const result = item.result || {};
+            const title = document.createElement("strong");
+            title.textContent = `${item.name}: ${item.success ? "SUCCESS" : "FAILED"}`;
+            row.appendChild(title);
+            const details = document.createElement("p");
+            details.style.cssText = "margin:8px 0 0;line-height:1.9;";
+            details.textContent = `HTTP Status: ${item.httpStatus ?? result.status_code ?? "N/A"} | Response Time: ${result.response_time_ms ?? "N/A"} ms | Anomalies: ${result.anomalies_detected ?? "N/A"} | Alerts Saved: ${result.alerts_saved ?? "N/A"}`;
+            row.appendChild(details);
+            if (item.error || result.error) {
+              const error = document.createElement("p");
+              error.style.color = "#ff6b81";
+              error.textContent = `Error: ${item.error || result.error}`;
+              row.appendChild(error);
+            }
+            results.appendChild(row);
+          });
+        }
+
+        if (data.lastError) {
+          const error = document.createElement("p");
+          error.textContent = "Controller error: " + data.lastError;
+          results.appendChild(error);
+        }
+      }
+    }
+
+    async function refreshAutoStatus(showMessage = false) {
+      try {
+        const data = await autoControllerRequest("/status");
+        autoRenderStatus(data);
+        if (showMessage) autoMessage("Status refreshed.", "success");
+      } catch (error) {
+        autoMessage("Could not connect to the automatic monitoring controller: " + error.message, "error");
+      }
+    }
+
+    document.getElementById("autoAddApiButton")?.addEventListener("click", async () => {
+      const button = document.getElementById("autoAddApiButton");
+      const nameInput = document.getElementById("autoApiName");
+      const urlInput = document.getElementById("autoApiUrl");
+
+      const name = nameInput.value.trim();
+      const url = urlInput.value.trim();
+
+      if (!name || !url) {
+        autoMessage("Enter both an API name and a public API URL.", "error");
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        const current = await autoControllerRequest("/status");
+        const duplicate = current.apis.some(api => api.url.toLowerCase() === url.toLowerCase());
+
+        const apis = duplicate
+          ? current.apis.map(api => api.url.toLowerCase() === url.toLowerCase() ? { name, url } : api)
+          : [...current.apis, { name, url }];
+
+        const saved = await autoControllerRequest("/config", {
+          method: "POST",
+          body: JSON.stringify({ apis })
+        });
+
+        nameInput.value = "";
+        urlInput.value = "";
+        autoMessage(`API list saved. Total configured APIs: ${saved.apis.length}.`, "success");
+        await refreshAutoStatus();
+      } catch (error) {
+        autoMessage(error.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById("autoStartStopButton")?.addEventListener("click", async () => {
+      const button = document.getElementById("autoStartStopButton");
+      button.disabled = true;
+
+      try {
+        const current = await autoControllerRequest("/status");
+        const endpoint = current.running ? "/stop" : "/start";
+        const data = await autoControllerRequest(endpoint, { method: "POST" });
+        autoRenderStatus(data);
+        autoMessage(data.running ? "Automatic monitoring started." : "Automatic monitoring stopped.", "success");
+        await refreshAutoStatus();
+      } catch (error) {
+        autoMessage(error.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById("autoRefreshButton")?.addEventListener("click", () => {
+      refreshAutoStatus(true);
+    });
+
+    refreshAutoStatus();
+    setInterval(() => refreshAutoStatus(), 5000);
   </script>
 </body>
 </html>

@@ -1,0 +1,234 @@
+const express = require("express");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+const HOST = "127.0.0.1";
+const PORT = 3001;
+const MONITOR_URL = "http://127.0.0.1:3000/monitor";
+const CONFIG_PATH = path.join(__dirname, "auto-monitor-config.json");
+const ALLOWED_INTERVALS = [1];
+
+app.use(cors({
+  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
+app.use(express.json({ limit: "100kb" }));
+
+let running = false;
+let busy = false;
+let timer = null;
+let nextRunAt = null;
+let lastRunAt = null;
+let lastResults = [];
+let lastError = null;
+
+function readConfig() {
+  const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+
+  if (!Array.isArray(config.apis)) {
+    throw new Error("Config apis must be an array.");
+  }
+
+  if (!ALLOWED_INTERVALS.includes(Number(config.intervalMinutes))) {
+    throw new Error("Only the 1-minute interval is enabled in this version.");
+  }
+
+  return config;
+}
+
+function writeConfig(config) {
+  const safeConfig = {
+    intervalMinutes: 1,
+    apis: config.apis
+  };
+
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(safeConfig, null, 2) + "\n", "utf8");
+}
+
+function getStatus() {
+  const config = readConfig();
+
+  return {
+    success: true,
+    running,
+    busy,
+    intervalMinutes: config.intervalMinutes,
+    apis: config.apis,
+    nextRunAt,
+    lastRunAt,
+    lastResults,
+    lastError
+  };
+}
+
+function clearNextTimer() {
+  if (timer) clearTimeout(timer);
+  timer = null;
+  nextRunAt = null;
+}
+
+function scheduleNextRun() {
+  if (!running) return;
+
+  clearNextTimer();
+  nextRunAt = new Date(Date.now() + 1 * 60 * 1000).toISOString();
+
+  timer = setTimeout(() => {
+    timer = null;
+    runCycle().catch(error => {
+      lastError = error.message;
+      console.error("[Auto Monitor]", error.message);
+      scheduleNextRun();
+    });
+  }, 1 * 60 * 1000);
+}
+
+async function runCycle() {
+  if (!running || busy) return;
+
+  busy = true;
+  lastRunAt = new Date().toISOString();
+  lastError = null;
+  lastResults = [];
+
+  try {
+    const config = readConfig();
+
+    if (!config.apis.length) {
+      throw new Error("Add at least one API URL before starting automatic monitoring.");
+    }
+
+    for (const api of config.apis) {
+      if (!running) break;
+
+      try {
+        const response = await fetch(MONITOR_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: api.url }),
+          signal: AbortSignal.timeout(20000)
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        lastResults.push({
+          name: api.name,
+          url: api.url,
+          httpStatus: response.status,
+          success: response.ok && data.success !== false,
+          result: data
+        });
+      } catch (error) {
+        lastResults.push({
+          name: api.name,
+          url: api.url,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+  } catch (error) {
+    lastError = error.message;
+  } finally {
+    busy = false;
+    if (running) scheduleNextRun();
+  }
+}
+
+app.get("/status", (req, res) => {
+  try {
+    res.json(getStatus());
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post("/config", (req, res) => {
+  try {
+    const apis = req.body?.apis;
+
+    if (!Array.isArray(apis) || apis.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: "Provide an array of up to 50 API entries."
+      });
+    }
+
+    const cleaned = apis.map((api, index) => {
+      const name = typeof api.name === "string" ? api.name.trim() : "";
+      const url = typeof api.url === "string" ? api.url.trim() : "";
+
+      if (!name || !url) {
+        throw new Error(`API ${index + 1}: name and URL are required.`);
+      }
+
+      let parsed;
+      try {
+        parsed = new URL(url);
+      } catch {
+        throw new Error(`API ${index + 1}: invalid URL.`);
+      }
+
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        throw new Error(`API ${index + 1}: only HTTP/HTTPS URLs are supported.`);
+      }
+
+      if (
+        parsed.username ||
+        parsed.password ||
+        /^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|::1$)/i.test(parsed.hostname) ||
+        /^172\.(1[6-9]|2\d|3[01])\./i.test(parsed.hostname)
+      ) {
+        throw new Error(`API ${index + 1}: use a public API URL without embedded credentials.`);
+      }
+
+      return { name, url };
+    });
+
+    writeConfig({ intervalMinutes: 1, apis: cleaned });
+    res.json({ success: true, apis: cleaned });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post("/start", async (req, res) => {
+  try {
+    const config = readConfig();
+
+    if (!config.apis.length) {
+      return res.status(400).json({
+        success: false,
+        error: "Add at least one API URL before starting."
+      });
+    }
+
+    if (running) return res.json(getStatus());
+
+    running = true;
+    res.json(getStatus());
+
+    runCycle().catch(error => {
+      lastError = error.message;
+      console.error("[Auto Monitor]", error.message);
+      scheduleNextRun();
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post("/stop", (req, res) => {
+  running = false;
+  clearNextTimer();
+  res.json(getStatus());
+});
+
+app.listen(PORT, HOST, () => {
+  console.log(`Automatic Monitoring controller: http://${HOST}:${PORT}`);
+  console.log("Interval: 1 minute");
+  console.log("Make sure the existing Care Guide server is running on port 3000.");
+});

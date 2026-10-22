@@ -1,0 +1,9 @@
+{
+    "apis":  [
+                 {
+                     "name":  "JSONPlaceholder Posts API",
+                     "url":  "https://jsonplaceholder.typicode.com/posts"
+                 }
+             ],
+    "intervalMinutes":  1
+}
