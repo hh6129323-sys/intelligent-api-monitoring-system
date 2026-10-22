@@ -263,3 +263,49 @@ describe("Care Guide Monitoring API", () => {
     expect(response.body.anomalies_detected).toBe(1);
   });
 
+
+describe("Batch API monitoring", () => {
+  test("should detect anomalies across multiple API results", async () => {
+    const response = await request(app)
+      .post("/monitor")
+      .send([
+        {
+          api_name: "Users API",
+          response_time_ms: 450,
+          status_code: 200,
+          records_returned: 25,
+        },
+        {
+          api_name: "Orders API",
+          response_time_ms: 5200,
+          status_code: 500,
+          records_returned: 0,
+        },
+      ]);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.batch_mode).toBe(true);
+    expect(response.body.total_apis).toBe(2);
+    expect(response.body.total_anomalies).toBe(3);
+
+    expect(response.body.results[0].anomalies_detected).toBe(0);
+    expect(response.body.results[1].anomalies_detected).toBe(3);
+  });
+
+  test("should reject invalid batch input", async () => {
+    const response = await request(app)
+      .post("/monitor")
+      .send([
+        {
+          api_name: "Invalid API",
+          response_time_ms: "slow",
+          status_code: 200,
+          records_returned: 10,
+        },
+      ]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+  });
+});

@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
@@ -258,6 +258,10 @@ app.get("/test-api", (req, res) => {
 });
 
 app.post("/monitor", async (req, res) => {
+  if (Array.isArray(req.body)) {
+    const processBatch = require("./batch-monitor");
+    return processBatch(req.body, res, explainAnomaly, saveAlert, saveMonitoringHistory, supabase, gemini);
+  }
   const { url, test_mode = false } = req.body || {};
 
   if (test_mode !== true && (typeof url !== "string" || !url.trim())) {
