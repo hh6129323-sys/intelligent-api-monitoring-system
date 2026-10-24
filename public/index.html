@@ -709,11 +709,11 @@ th, td,
           </div>
           <div class="card">
             <div class="card-label">Last Run</div>
-            <div class="card-value" id="autoLastRun">Not run yet</div>
+            <div class="card-value" id="autoLastRun">—</div>
           </div>
           <div class="card">
             <div class="card-label">Next Run</div>
-            <div class="card-value" id="autoNextRun">Not scheduled</div>
+            <div class="card-value" id="autoNextRun">—</div>
           </div>
         </div>
 
@@ -1158,7 +1158,7 @@ th, td,
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7">No results.</td></tr>'}</tbody>
         </table>
-        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} Ã‚Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
+        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} Ãƒâ€šÃ‚Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
     }
 
     let batchInputMode = "simple";
@@ -1440,7 +1440,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
       if (badge) badge.textContent = data.busy ? "Running Check" : (data.running ? "Running" : "Stopped");
       if (toggle) toggle.textContent = data.running ? "Stop Monitoring" : "Start Monitoring";
       if (lastRun) lastRun.textContent = autoFormatTime(data.lastRunAt);
-      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "Not scheduled";
+      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "—";
 
       if (results) {
         results.replaceChildren();
@@ -1456,7 +1456,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
         } else {
           data.apis.forEach(api => {
             const row = document.createElement("p");
-            row.textContent = `${api.name} — ${api.url}`;
+            row.textContent = `${api.name} â€” ${api.url}`;
             results.appendChild(row);
           });
         }
