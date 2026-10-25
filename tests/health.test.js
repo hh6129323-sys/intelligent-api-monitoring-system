@@ -33,8 +33,10 @@ jest.mock("@supabase/supabase-js", () => ({
   })),
 }));
 
+process.env.MONITORING_SECRET = "jest-test-secret";
 const request = require("supertest");
 const app = require("../server");
+const monitorRequest = () => request(app).post("/monitor").set("Authorization", "Bearer " + process.env.MONITORING_SECRET);
 
 describe("Care Guide Monitoring API", () => {
   afterEach(() => {
@@ -51,8 +53,7 @@ describe("Care Guide Monitoring API", () => {
   });
 
   test("POST /monitor should reject a missing URL", async () => {
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({});
 
     expect(response.status).toBe(400);
@@ -61,8 +62,7 @@ describe("Care Guide Monitoring API", () => {
   });
 
   test("POST /monitor should reject an invalid URL", async () => {
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "not-a-valid-url" });
 
     expect(response.status).toBe(400);
@@ -70,8 +70,7 @@ describe("Care Guide Monitoring API", () => {
   });
 
   test("POST /monitor test mode should detect zero records", async () => {
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ test_mode: true });
 
     expect(response.status).toBe(200);
@@ -96,8 +95,7 @@ describe("Care Guide Monitoring API", () => {
       text: async () => JSON.stringify({ message: "Hello" }),
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -116,8 +114,7 @@ describe("Care Guide Monitoring API", () => {
       text: async () => JSON.stringify({ records: "not-an-array" }),
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -140,8 +137,7 @@ describe("Care Guide Monitoring API", () => {
         }),
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -164,8 +160,7 @@ describe("Care Guide Monitoring API", () => {
         }),
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -184,8 +179,7 @@ describe("Care Guide Monitoring API", () => {
       text: async () => "this is not valid JSON",
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -204,8 +198,7 @@ describe("Care Guide Monitoring API", () => {
       text: async () => "plain text response",
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -237,8 +230,7 @@ describe("Care Guide Monitoring API", () => {
       };
     });
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(200);
@@ -254,8 +246,7 @@ describe("Care Guide Monitoring API", () => {
       new Error("Simulated network failure")
     );
 
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send({ url: "https://example.com/api" });
 
     expect(response.status).toBe(502);
@@ -266,8 +257,7 @@ describe("Care Guide Monitoring API", () => {
 
 describe("Batch API monitoring", () => {
   test("should detect anomalies across multiple API results", async () => {
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send([
         {
           api_name: "Users API",
@@ -294,8 +284,7 @@ describe("Batch API monitoring", () => {
   });
 
   test("should reject invalid batch input", async () => {
-    const response = await request(app)
-      .post("/monitor")
+    const response = await monitorRequest()
       .send([
         {
           api_name: "Invalid API",
@@ -309,3 +298,4 @@ describe("Batch API monitoring", () => {
     expect(response.body.success).toBe(false);
   });
 });
+
