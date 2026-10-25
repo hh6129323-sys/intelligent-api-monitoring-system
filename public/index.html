@@ -1011,6 +1011,7 @@ th, td,
 
     let monitoringHistory = [];
     let historyLoading = false;
+    let showAllHistory = false;
 
     async function loadMonitoringHistory() {
       if (historyLoading) return;
@@ -1066,12 +1067,28 @@ th, td,
         return;
       }
 
-      list.innerHTML = history.map((item) => `
+      const visibleHistory = showAllHistory ? history : history.slice(0, 5);
+
+      list.innerHTML = visibleHistory.map((item) => `
         <div class="history-item">
           <div><strong>${escapeHtml(item.target || "Unknown")}</strong><span class="muted">${escapeHtml(item.time || "")}</span></div>
           <div><strong>${escapeHtml(item.responseTime ?? "N/A")} ms</strong><span class="muted">Status: ${escapeHtml(item.statusCode ?? "N/A")}</span></div>
         </div>`).join("");
 
+      if (history.length > 5) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "secondary";
+        toggle.style.marginTop = "12px";
+        toggle.textContent = showAllHistory
+          ? "Show Less"
+          : `See All History (${history.length})`;
+        toggle.addEventListener("click", () => {
+          showAllHistory = !showAllHistory;
+          renderHistory();
+        });
+        list.appendChild(toggle);
+      }
       const values = history.slice(0, 8)
         .map((item) => Number(item.responseTime))
         .filter((n) => Number.isFinite(n) && n >= 0)
