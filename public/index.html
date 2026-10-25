@@ -1,9 +1,10 @@
-
+﻿
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>Care Guide | API Monitor</title>
   <style>
     :root {
@@ -709,11 +710,11 @@ th, td,
           </div>
           <div class="card">
             <div class="card-label">Last Run</div>
-            <div class="card-value" id="autoLastRun">—</div>
+            <div class="card-value" id="autoLastRun">â€”</div>
           </div>
           <div class="card">
             <div class="card-label">Next Run</div>
-            <div class="card-value" id="autoNextRun">—</div>
+            <div class="card-value" id="autoNextRun">â€”</div>
           </div>
         </div>
 
@@ -1158,7 +1159,7 @@ th, td,
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7">No results.</td></tr>'}</tbody>
         </table>
-        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} Ãƒâ€šÃ‚Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
+        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
     }
 
     let batchInputMode = "simple";
@@ -1440,7 +1441,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
       if (badge) badge.textContent = data.busy ? "Running Check" : (data.running ? "Running" : "Stopped");
       if (toggle) toggle.textContent = data.running ? "Stop Monitoring" : "Start Monitoring";
       if (lastRun) lastRun.textContent = autoFormatTime(data.lastRunAt);
-      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "—";
+      if (nextRun) nextRun.textContent = data.running ? autoFormatTime(data.nextRunAt) : "â€”";
 
       if (results) {
         results.replaceChildren();
@@ -1456,7 +1457,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
         } else {
           data.apis.forEach(api => {
             const row = document.createElement("p");
-            row.textContent = `${api.name} â€” ${api.url}`;
+            row.textContent = `${api.name} Ã¢â‚¬â€ ${api.url}`;
             results.appendChild(row);
           });
         }
@@ -1577,6 +1578,7 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
   </script>
 </body>
 </html>
+
 
 
 
