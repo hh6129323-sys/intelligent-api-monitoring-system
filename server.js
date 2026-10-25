@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
@@ -258,6 +258,18 @@ app.get("/test-api", (req, res) => {
 });
 
 app.post("/monitor", async (req, res) => {
+  const expectedSecret = process.env.MONITORING_SECRET;
+  const providedSecret = req.get("Authorization");
+
+  if (
+    !expectedSecret ||
+    providedSecret !== `Bearer ${expectedSecret}`
+  ) {
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized",
+    });
+  }
   if (Array.isArray(req.body)) {
     const processBatch = require("./batch-monitor");
     return processBatch(req.body, res, explainAnomaly, saveAlert, saveMonitoringHistory, supabase, gemini);
@@ -672,3 +684,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
