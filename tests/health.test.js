@@ -299,3 +299,68 @@ describe("Batch API monitoring", () => {
   });
 });
 
+
+// Direct JSON array data validity tests
+describe("Direct JSON array data validity", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("should detect an empty JSON array", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => "application/json" },
+      text: async () => "[]",
+    });
+
+    const response = await monitorRequest()
+      .send({ url: "https://example.com/empty-array" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "zero_records" }),
+      ])
+    );
+  });
+
+  test("should detect invalid items in a JSON array", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => "application/json" },
+      text: async () => '[null, "wrong"]',
+    });
+
+    const response = await monitorRequest()
+      .send({ url: "https://example.com/invalid-array" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "invalid_records" }),
+      ])
+    );
+  });
+
+  test("should accept a JSON array containing valid object records", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: () => "application/json" },
+      text: async () => '[{"id":1},{"id":2}]',
+    });
+
+    const response = await monitorRequest()
+      .send({ url: "https://example.com/valid-array" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.alerts).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "invalid_records" }),
+        expect.objectContaining({ type: "zero_records" }),
+      ])
+    );
+  });
+});
