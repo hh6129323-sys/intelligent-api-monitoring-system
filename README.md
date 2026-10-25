@@ -18,6 +18,7 @@ A Node.js and Express application that monitors API responses, detects anomalies
 - Node.js and npm
 - Supabase project and database configuration
 - Google Gemini API key
+- Monitoring secret for authenticated POST /monitor requests
 
 ## Setup
 1. Clone or download this repository.
@@ -34,6 +35,7 @@ A Node.js and Express application that monitors API responses, detects anomalies
    SUPABASE_URL=your_supabase_project_url
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    GEMINI_API_KEY=your_gemini_api_key
+   MONITORING_SECRET=replace_with_a_long_random_secret
    ```
 
 Never commit real API keys or the `.env` file to GitHub.
@@ -51,7 +53,7 @@ http://localhost:3000
 
 ## API Endpoints
 - `GET /health` — Check application health and configuration status.
-- `POST /monitor` — Monitor a target API URL by providing a `url`, or submit an array of measured API results for batch processing.
+- `POST /monitor` — Monitor a target API URL by providing a `url`, or submit an array of measured API results for batch processing. Requires `Authorization: Bearer <MONITORING_SECRET>`.
 - `GET /alerts` — Retrieve active alerts.
 - `GET /alerts/all` — Retrieve all alerts.
 - `PATCH /alerts/:id/resolve` — Resolve an alert.
@@ -102,3 +104,4 @@ See `AI_Prompts.docx` for the Gemini prompt used to explain detected anomalies.
 - `tests/health.test.js` — Automated API tests.
 - `AI_Prompts.docx` — AI prompt documentation.
 - `.env` — Local credentials; do not commit.
+
