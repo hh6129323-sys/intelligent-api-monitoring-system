@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
@@ -375,18 +375,58 @@ app.post("/monitor", async (req, res) => {
       });
     }
 
-    if (body !== null && typeof body === "object" && !Array.isArray(body)) {
+    if (Array.isArray(body)) {
+      if (body.length === 0) {
+        anomalies.push({
+          type: "zero_records",
+          severity: "high",
+          message: "The API returned an empty array.",
+          details: { url: targetUrl, records_count: 0 },
+        });
+      } else {
+        const invalidItems = body.filter(
+          (item) => item === null || typeof item !== "object" || Array.isArray(item)
+        );
+
+        if (invalidItems.length > 0) {
+          anomalies.push({
+            type: "invalid_records",
+            severity: "medium",
+            message: "The API array contains invalid record items.",
+            details: {
+              url: targetUrl,
+              total_records: body.length,
+              invalid_records: invalidItems.length,
+            },
+          });
+        }
+      }
+    } else if (body !== null && typeof body === "object") {
       if (Array.isArray(body.records)) {
         if (body.records.length === 0) {
           anomalies.push({
             type: "zero_records",
             severity: "high",
             message: "The API returned zero records.",
-            details: {
-              url: targetUrl,
-              records_count: 0,
-            },
+            details: { url: targetUrl, records_count: 0 },
           });
+        } else {
+          const invalidItems = body.records.filter(
+            (item) => item === null || typeof item !== "object" || Array.isArray(item)
+          );
+
+          if (invalidItems.length > 0) {
+            anomalies.push({
+              type: "invalid_records",
+              severity: "medium",
+              message: "The records array contains invalid items.",
+              details: {
+                url: targetUrl,
+                total_records: body.records.length,
+                invalid_records: invalidItems.length,
+              },
+            });
+          }
         }
       } else if (Object.prototype.hasOwnProperty.call(body, "records")) {
         anomalies.push({
@@ -414,10 +454,7 @@ app.post("/monitor", async (req, res) => {
           type: "invalid_count",
           severity: "medium",
           message: "The API returned an invalid count value.",
-          details: {
-            url: targetUrl,
-            count: body.count,
-          },
+          details: { url: targetUrl, count: body.count },
         });
       }
     } else if (
@@ -427,14 +464,10 @@ app.post("/monitor", async (req, res) => {
       anomalies.push({
         type: "unexpected_data",
         severity: "low",
-        message: "The response is not a JSON object.",
-        details: {
-          url: targetUrl,
-          content_type: contentType,
-        },
+        message: "The response is not a JSON object or array.",
+        details: { url: targetUrl, content_type: contentType },
       });
     }
-
     const savedAlerts = [];
 
     for (const anomaly of anomalies) {
