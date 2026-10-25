@@ -1159,7 +1159,7 @@ th, td,
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7">No results.</td></tr>'}</tbody>
         </table>
-        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
+        <p class="muted">Database configured: ${data.database_connected ? "Yes" : "No"} ├â╞Æ├åΓÇÖ├â┬ó├óΓÇÜ┬¼├à┬í├â╞Æ├óΓé¼┼í├âΓÇÜ├é┬╖ Gemini configured: ${data.gemini_configured ? "Yes" : "No"}</p>`;
     }
 
     let batchInputMode = "simple";
@@ -1503,12 +1503,65 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
     }
 
     async function refreshAutoStatus(showMessage = false) {
+      const badge = document.getElementById("autoModeBadge");
+      const lastRun = document.getElementById("autoLastRun");
+      const nextRun = document.getElementById("autoNextRun");
+      const results = document.getElementById("autoMonitorResults");
+      const startButton = document.getElementById("autoStartStopButton");
+      const saveButton = document.getElementById("autoAddApiButton");
+
       try {
-        const data = await autoControllerRequest("/status");
-        autoRenderStatus(data);
-        if (showMessage) autoMessage("Status refreshed.", "success");
+        const data = await apiRequest("/monitoring-history?limit=1");
+        const latest = data.history && data.history.length ? data.history[0] : null;
+
+        if (badge) badge.textContent = latest ? "Cloud Monitoring" : "Waiting for First Check";
+        if (lastRun) lastRun.textContent = latest ? autoFormatTime(latest.created_at) : "No checks recorded";
+        if (nextRun) nextRun.textContent = "Managed by Cloudflare Cron";
+
+        if (startButton) {
+          startButton.disabled = true;
+          startButton.textContent = "Managed by Cloudflare";
+          startButton.title = "Cloud monitoring is scheduled in Cloudflare.";
+        }
+        if (saveButton) {
+          saveButton.disabled = true;
+          saveButton.title = "To change monitored APIs, update the Cloudflare Worker configuration.";
+        }
+
+        if (results) {
+          results.replaceChildren();
+          const heading = document.createElement("h3");
+          heading.textContent = "Latest Cloud Monitoring Result";
+          results.appendChild(heading);
+
+          if (!latest) {
+            const empty = document.createElement("p");
+            empty.textContent = "No monitoring history has been recorded yet.";
+            results.appendChild(empty);
+          } else {
+            const row = document.createElement("div");
+            row.style.cssText = "padding:14px;margin:10px 0;border:1px solid #263449;border-radius:10px;";
+            const title = document.createElement("strong");
+            title.textContent = latest.url || latest.api_url || "Monitored API";
+            row.appendChild(title);
+
+            const details = document.createElement("p");
+            details.style.cssText = "margin:8px 0 0;line-height:1.9;";
+            details.textContent =
+              "HTTP Status: " + (latest.status_code ?? latest.http_status ?? "N/A") +
+              " | Response Time: " + (latest.response_time_ms ?? "N/A") + " ms" +
+              " | Recorded: " + autoFormatTime(latest.created_at);
+            row.appendChild(details);
+            results.appendChild(row);
+          }
+        }
+
+        if (showMessage) autoMessage("Cloud monitoring history refreshed.", "success");
       } catch (error) {
-        autoMessage("Could not connect to the automatic monitoring controller: " + error.message, "error");
+        if (badge) badge.textContent = "Status Unavailable";
+        if (lastRun) lastRun.textContent = "Could not load history";
+        if (nextRun) nextRun.textContent = "Managed by Cloudflare Cron";
+        autoMessage("Could not load cloud monitoring history: " + error.message, "error");
       }
     }
 
@@ -1578,12 +1631,3 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
