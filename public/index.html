@@ -924,6 +924,7 @@ th, td,
     }
 
     let cachedAlerts = [];
+    let showAllAlerts = false;
 
     function renderFilteredAlerts() {
       const table = $("alertsTable");
@@ -951,7 +952,10 @@ th, td,
         return;
       }
 
-      table.innerHTML = filtered.map((alert) => {
+      const limitAlerts = !showAllAlerts && !query && severity === "all" && status === "all";
+      const visibleAlerts = limitAlerts ? filtered.slice(0, 5) : filtered;
+
+      table.innerHTML = visibleAlerts.map((alert) => {
         const id = alert.id;
         const alertStatus = String(alert.status || "active");
         const isResolved = alertStatus.toLowerCase() === "resolved";
@@ -974,8 +978,30 @@ th, td,
             </td>
           </tr>`;
       }).join("");
-    }
 
+      if (!query && severity === "all" && status === "all" && filtered.length > 5) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.style.textAlign = "center";
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary";
+        button.textContent = showAllAlerts
+          ? "Show Less"
+          : `See All Alerts (${filtered.length})`;
+
+        button.addEventListener("click", () => {
+          showAllAlerts = !showAllAlerts;
+          renderFilteredAlerts();
+        });
+
+        cell.appendChild(button);
+        row.appendChild(cell);
+        table.appendChild(row);
+      }
+    }
     $("alertSearch")?.addEventListener("input", renderFilteredAlerts);
     $("severityFilter")?.addEventListener("change", renderFilteredAlerts);
     $("statusFilter")?.addEventListener("change", renderFilteredAlerts);
