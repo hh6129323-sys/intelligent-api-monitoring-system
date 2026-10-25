@@ -874,12 +874,25 @@ th, td,
   <script>
     const $ = (id) => document.getElementById(id);
 
+    function getMonitoringSecret() {
+      let secret = sessionStorage.getItem("monitoring_secret");
+      if (!secret) {
+        secret = window.prompt("Enter the Render MONITORING_SECRET for this demo:");
+        if (!secret || !secret.trim()) {
+          throw new Error("Monitoring secret is required.");
+        }
+        secret = secret.trim();
+        sessionStorage.setItem("monitoring_secret", secret);
+      }
+      return secret;
+    }
     async function apiRequest(path, options = {}) {
       const response = await fetch(path, {
         ...options,
         headers: {
           "Content-Type": "application/json",
-          ...(options.headers || {})
+          ...(options.headers || {}),
+          ...(path === "/monitor" ? { "Authorization": `Bearer ${getMonitoringSecret()}` } : {})
         }
       });
 
@@ -1327,7 +1340,7 @@ th, td,
 
         const response = await fetch("/monitor", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getMonitoringSecret()}` },
           body: JSON.stringify(items)
         });
 
@@ -1463,7 +1476,8 @@ document.querySelectorAll(".nav-item[data-target]").forEach((item) => {
         ...options,
         headers: {
           "Content-Type": "application/json",
-          ...(options.headers || {})
+          ...(options.headers || {}),
+          ...(path === "/monitor" ? { "Authorization": `Bearer ${getMonitoringSecret()}` } : {})
         }
       });
 
